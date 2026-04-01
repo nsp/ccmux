@@ -693,3 +693,21 @@ def test_session_from_dict_missing_new_fields():
     assert sess.ghostty_uuid is None
     assert sess.agent_status is None
     assert sess.agent_activity is None
+
+
+def test_find_session_by_claude_id(tmp_path, monkeypatch):
+    """Find a session by its claude_session_id."""
+    monkeypatch.setattr("ccmux.state.store.STATE_FILE", tmp_path / "state.json")
+    monkeypatch.setattr("ccmux.state.store.STATE_DIR", tmp_path)
+
+    from ccmux.state import store
+    store.add_session("fox", "/repo", "/repo/wt", claude_session_id="uuid-123")
+    store.add_session("owl", "/repo", "/repo/wt2", claude_session_id="uuid-456")
+
+    result = store.find_session_by_claude_id("uuid-123")
+    assert result is not None
+    name, sess = result
+    assert name == "fox"
+    assert sess.claude_session_id == "uuid-123"
+
+    assert store.find_session_by_claude_id("nonexistent") is None

@@ -287,3 +287,15 @@ def find_session_by_path(path: str) -> Optional[tuple[str, Session]]:
                 best_len = len(sp)
                 best = (sess.name, sess)
     return best
+
+
+def find_session_by_claude_id(claude_session_id: str) -> Optional[tuple[str, Session]]:
+    """Find a session by its claude_session_id.
+
+    Returns (session_name, Session) or None.
+    """
+    state = _load_raw()
+    for name, data in state.get("sessions", {}).items():
+        if data.get("claude_session_id") == claude_session_id:
+            return (name, Session.from_dict(name, data))
+    return None
