@@ -652,3 +652,44 @@ def test_update_tmux_ids_with_bash(temp_state_dir):
     sess = state.get_session("fox")
     assert sess.tmux_cc_window_id == "@5"
     assert sess.tmux_bash_window_id == "@6"
+
+
+def test_session_roundtrip_with_ghostty_fields():
+    """New fields survive to_dict/from_dict roundtrip."""
+    from ccmux.state.session import WorktreeSession
+
+    sess = WorktreeSession(
+        name="fox",
+        repo_path="/repo",
+        session_path="/repo/.ccmux/worktrees/fox",
+        ghostty_uuid="ABC-123",
+        agent_status="running",
+        agent_activity="editing main.py",
+        agent_updated_at="2026-03-31T12:00:00Z",
+    )
+    d = sess.to_dict()
+    assert d["ghostty_uuid"] == "ABC-123"
+    assert d["agent_status"] == "running"
+    assert d["agent_activity"] == "editing main.py"
+    assert d["agent_updated_at"] == "2026-03-31T12:00:00Z"
+
+    restored = WorktreeSession.from_dict("fox", d)
+    assert restored.ghostty_uuid == "ABC-123"
+    assert restored.agent_status == "running"
+
+
+def test_session_from_dict_missing_new_fields():
+    """Old state files without new fields get None defaults."""
+    from ccmux.state.session import Session
+
+    data = {
+        "repo_path": "/repo",
+        "session_path": "/repo/wt",
+        "is_worktree": True,
+        "tmux_window_ids": {"claude_code": None, "bash_terminal": None},
+        "id": 1,
+    }
+    sess = Session.from_dict("old", data)
+    assert sess.ghostty_uuid is None
+    assert sess.agent_status is None
+    assert sess.agent_activity is None
