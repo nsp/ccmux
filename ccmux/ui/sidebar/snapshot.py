@@ -33,6 +33,9 @@ class SessionSnapshot:
     lines_removed: int = 0
     activity_ts: float = 0.0
     note: str = ""
+    agent_status: str | None = None
+    agent_activity: str | None = None
+    ghostty_uuid: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -271,5 +274,8 @@ async def build_snapshot() -> list[SessionSnapshot]:
             lines_removed=removed,
             activity_ts=activity_ts,
             note=sess.note or "",
+            agent_status=sess.agent_status,
+            agent_activity=sess.agent_activity,
+            ghostty_uuid=sess.ghostty_uuid,
         ))
     return snapshot
