@@ -10,8 +10,10 @@ from cyclopts import Parameter
 from rich.prompt import Confirm
 
 from ccmux import __version__
+from ccmux.agent_events import process_agent_event
 from ccmux.display import console
 from ccmux.exceptions import CcmuxError, NoSessionsFound
+from ccmux.hooks import get_hooks_config, install_hooks
 from ccmux.naming import BASH_SESSION, INNER_SESSION, OUTER_SESSION
 from ccmux.session_ops import (
     do_attach,
@@ -150,6 +152,43 @@ def detach(
 def reload() -> None:
     """Reload the workspace UI (kills and recreates the outer tmux session)."""
     do_reload()
+
+
+@app.command(name="agent-event")
+def agent_event(
+    event: str,
+    *,
+    claude_session_id: Annotated[str, Parameter(name=["--claude-session-id"])] = "",
+    ghostty_uuid: Annotated[Optional[str], Parameter(name=["--ghostty-uuid"])] = None,
+    status: Annotated[Optional[str], Parameter(name=["--status"])] = None,
+    activity: Annotated[Optional[str], Parameter(name=["--activity"])] = None,
+) -> None:
+    """Report a Claude Code lifecycle event (called by hooks, not directly)."""
+    if not claude_session_id:
+        console.print("[red]Error:[/red] --claude-session-id is required")
+        sys.exit(1)
+    process_agent_event(
+        claude_session_id=claude_session_id,
+        event=event,
+        ghostty_uuid=ghostty_uuid,
+        status=status,
+        activity=activity,
+    )
+
+
+@app.command(name="install-hooks")
+def cmd_install_hooks() -> None:
+    """Install Claude Code hooks for session lifecycle tracking."""
+    import json as json_mod
+
+    created = install_hooks()
+    for path in created:
+        console.print(f"  [green]✓[/green] {path}")
+
+    config = get_hooks_config()
+    console.print(f"\n[bold cyan]Add this to your Claude Code settings[/bold cyan]")
+    console.print(f"(~/.claude/settings.json, merge into existing 'hooks' key):\n")
+    console.print(json_mod.dumps(config, indent=2))
 
 
 def check_claude_installed() -> bool:
