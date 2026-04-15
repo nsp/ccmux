@@ -15,6 +15,10 @@ class Session:
     claude_session_id: Optional[str] = None
     id: int = 0
     note: Optional[str] = None
+    ghostty_uuid: Optional[str] = None
+    agent_status: Optional[str] = None
+    agent_activity: Optional[str] = None
+    agent_updated_at: Optional[str] = None
 
     @property
     def is_worktree(self) -> bool:
@@ -39,6 +43,14 @@ class Session:
             d["claude_session_id"] = self.claude_session_id
         if self.note:
             d["note"] = self.note
+        if self.ghostty_uuid:
+            d["ghostty_uuid"] = self.ghostty_uuid
+        if self.agent_status:
+            d["agent_status"] = self.agent_status
+        if self.agent_activity:
+            d["agent_activity"] = self.agent_activity
+        if self.agent_updated_at:
+            d["agent_updated_at"] = self.agent_updated_at
         return d
 
     @classmethod
@@ -54,6 +66,10 @@ class Session:
             claude_session_id=data.get("claude_session_id"),
             id=data.get("id", 0),
             note=data.get("note"),
+            ghostty_uuid=data.get("ghostty_uuid"),
+            agent_status=data.get("agent_status"),
+            agent_activity=data.get("agent_activity"),
+            agent_updated_at=data.get("agent_updated_at"),
         )
         if data.get("is_worktree", True):
             return WorktreeSession(**kwargs)

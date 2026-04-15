@@ -217,6 +217,13 @@ class SidebarApp(App):
         else:
             status = "idle"
 
+        # Agent status overrides: waiting_input → blocked, detached → deactivated
+        if entry.agent_status == "waiting_input" and status != "active":
+            status = "blocked"
+            self._blocked_sessions.add(name)
+        elif entry.agent_status == "detached":
+            status = "deactivated"
+
         has_blocker_alert = name in self._blocker_alerted_sessions
         return (status, has_blocker_alert)
 

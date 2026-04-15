@@ -88,6 +88,7 @@ from ccmux.tmux_ops import (
     set_window_user_option,
     tmux_session_exists,
 )
+from ccmux.ghostty import get_ghostty_uuid
 from ccmux.ui.tmux import apply_claude_inner_session_config, apply_server_global_config
 
 
@@ -568,6 +569,9 @@ def _save_new_session_state(
     )
     tag_window_with_session_id(cc_window_id, name)
     tag_window_with_session_id(bash_window_id, name)
+    ghostty_uuid = get_ghostty_uuid()
+    if ghostty_uuid:
+        state.update_session(name, ghostty_uuid=ghostty_uuid)
 
 
 # ---------------------------------------------------------------------------
