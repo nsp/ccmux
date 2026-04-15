@@ -13,7 +13,7 @@ from ccmux import __version__
 from ccmux.agent_events import process_agent_event
 from ccmux.display import console
 from ccmux.exceptions import CcmuxError, NoSessionsFound
-from ccmux.hooks import get_hooks_config, install_hooks
+from ccmux.hooks import get_hooks_config, install_hooks, merge_hooks_into_settings
 from ccmux.naming import BASH_SESSION, INNER_SESSION, OUTER_SESSION
 from ccmux.session_ops import (
     do_attach,
@@ -179,16 +179,14 @@ def agent_event(
 @app.command(name="install-hooks")
 def cmd_install_hooks() -> None:
     """Install Claude Code hooks for session lifecycle tracking."""
-    import json as json_mod
-
     created = install_hooks()
     for path in created:
         console.print(f"  [green]✓[/green] {path}")
 
-    config = get_hooks_config()
-    console.print(f"\n[bold cyan]Add this to your Claude Code settings[/bold cyan]")
-    console.print(f"(~/.claude/settings.json, merge into existing 'hooks' key):\n")
-    console.print(json_mod.dumps(config, indent=2))
+    if merge_hooks_into_settings():
+        console.print(f"  [green]✓[/green] Updated ~/.claude/settings.json")
+    else:
+        console.print(f"  [dim]~/.claude/settings.json already up to date[/dim]")
 
 
 def check_claude_installed() -> bool:

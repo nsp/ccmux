@@ -1,5 +1,6 @@
 """Claude Code hook generation and installation."""
 
+import json
 import stat
 from pathlib import Path
 
@@ -85,6 +86,7 @@ def get_hooks_config() -> dict:
 
 
 def install_hooks() -> list[Path]:
+    """Write hook scripts to disk."""
     HOOKS_DIR.mkdir(parents=True, exist_ok=True)
     created = []
     scripts = {
@@ -97,3 +99,41 @@ def install_hooks() -> list[Path]:
         path.chmod(path.stat().st_mode | stat.S_IEXEC)
         created.append(path)
     return created
+
+
+CLAUDE_SETTINGS = Path.home() / ".claude" / "settings.json"
+
+
+def merge_hooks_into_settings() -> bool:
+    """Merge ccmux hook entries into ~/.claude/settings.json.
+
+    Overwrites any existing ccmux hooks (matched by command path containing
+    '.ccmux/hooks/'), preserves non-ccmux hooks. Returns True if modified.
+    """
+    if not CLAUDE_SETTINGS.exists():
+        return False
+
+    with open(CLAUDE_SETTINGS) as f:
+        settings = json.load(f)
+
+    hooks = settings.setdefault("hooks", {})
+    ccmux_hooks = get_hooks_config()["hooks"]
+    modified = False
+
+    for event, new_entries in ccmux_hooks.items():
+        existing = hooks.get(event, [])
+        # Remove any existing ccmux hooks
+        filtered = [
+            h for h in existing
+            if not any(".ccmux/hooks/" in hh.get("command", "") for hh in h.get("hooks", []))
+        ]
+        hooks[event] = filtered + new_entries
+        if hooks[event] != existing:
+            modified = True
+
+    if modified:
+        with open(CLAUDE_SETTINGS, "w") as f:
+            json.dump(settings, f, indent=2)
+            f.write("\n")
+
+    return modified
